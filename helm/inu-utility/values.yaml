@@ -1,0 +1,36 @@
+global:
+  image:
+    pullPolicy: Always
+  volumes:
+    keep: false
+  storageClassName: rbd
+replicaCount: 1
+image:
+  repository: docker.your_name.com/inu/inu-utility
+  tag: 0.1.0
+  pullPolicy: Always
+service:
+  name: inu-utility
+  type: ClusterIP
+  externalPort: null
+  internalPort: null
+volumes:
+  data:
+    storageClassName: rbd
+    accessModes: ReadWriteOnce
+    size: 60Gi
+    mountPath: /data/backup
+args:
+  host: 192.168.2.3:22
+  user: stt
+  password: stt123
+  remoteDir: /home/stt
+  mongoEnabled: true
+  mongoAddr: mongodb
+  mongoPort: 27017
+  esEnabled: true
+  esAddr: es-client
+  esPort: 9200
+  schedule: "1 1 3 * * *"
+pvcName: elasticsearch-snap # it's created by elasticsearch project
+snapDir: /snapshot/backups/my_backup

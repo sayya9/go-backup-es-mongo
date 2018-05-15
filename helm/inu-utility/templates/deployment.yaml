@@ -1,0 +1,55 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "fullname" . }}
+  labels:
+{{ include "labels" . | indent 4 }}
+spec:
+  replicas: {{.Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+{{ include "labels.core" . | indent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          name: inu-utility
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          args: 
+            - --host={{ .Values.args.host }}
+            - --user={{ .Values.args.user }}
+            - --password={{ .Values.args.password }}
+            - --local_parent_dir={{ .Values.volumes.data.mountPath }}
+            - --remote_parent_dir={{ .Values.args.remoteDir }}
+            - --mongo_enable={{ .Values.args.mongoEnabled }}
+            - --mongo_addr={{ .Values.args.mongoAddr }}
+            - --mongo_port={{ .Values.args.mongoPort }}
+            - --es_enable={{ .Values.args.esEnabled }}
+            - --es_addr={{ .Values.args.esAddr }}
+            - --es_port={{ .Values.args.esPort }}
+            - --schedule={{ .Values.args.schedule }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          volumeMounts:
+            - name: tz-conf
+              mountPath: /etc/localtime
+            - name: data
+              mountPath: {{ .Values.volumes.data.mountPath }}
+            - name: snap
+              mountPath: {{ .Values.snapDir }}
+    {{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+    {{- end }}
+      volumes:
+        - name: tz-conf
+          hostPath:
+            path: /etc/localtime
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Chart.Name }}-data
+        - name: snap
+          persistentVolumeClaim:
+            claimName: {{ .Values.pvcName }}
